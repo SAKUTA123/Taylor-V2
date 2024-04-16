@@ -75,10 +75,6 @@ const stream = pretty({
     },
 });
 
-const logger = pino({
-    level: 'error'
-}, stream);
-
 import {
     makeWaSocket,
     protoType,
@@ -273,6 +269,13 @@ const [
     storeSystem.useMultiFileAuthState(authFolder)
 ])
 
+const logger = pino({
+	timestamp: () => `,"time":"${new Date().toJSON()}"`,
+	level: Helper.opts["pairing-code"] ? 'silent' : 'info'
+}, stream).child({
+	class: 'baileys'
+})
+
 global.store = storeSystem.makeInMemoryStore({
     logger
 });
@@ -454,44 +457,53 @@ if (useMobile && !conn.authState.creds.registered) {
     await askOTP();
 }
 
-conn.logger.info('\n🚩 W A I T I N G\n');
+logger.info('\n🚩 W A I T I N G\n');
 
-process.on('multipleResolves', (type, promise, reason) => {
-  console.log(`${colors.bold.red(`[MULTIPLE RESOLVES]`)} `);
-  //console.log(type, promise, reason)
-  });
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.log(`${colors.bold.red(`[UNHANDLED REJECTION]`)} `);
-    //console.log(reason, promise)
-  });
-
-process.on('uncaughtException', (err, origin) => {
-  console.log(`${colors.bold.red(`[UNCAUGHT EXCEPTION]`)} `);
-  //console.log(err, origin)
-  });
-
-process.on('uncaughtExceptionMonitor', (err, origin) => {
-  console.log(`${colors.bold.red(`[UNCAUGHT EXCEPTION MONITOR]`)} `);
-  //console.log(err, origin)
-  });
-
-process.on('warning', (warning) => {
-  console.log(`${colors.bold.red(`[WARNING]`)} ` + `${warning}`.yellow);
+process.removeAllListeners();
+process.on("beforeExit", (code) => {
+    logger.info("[AntiCrash] | [BeforeExit_Logs] | [Start]");
+    logger.info(code);
+    logger.info("[AntiCrash] | [BeforeExit_Logs] | [End]");
 });
 
-process.on('message', (message) => {
-  console.log(`${colors.bold.green(`[MESSAGE]`)} ` + `${message}`.yellow);
+process.on("exit", (error) => {
+    logger.info("[AntiCrash] | [Exit_Logs] | [Start] ");
+    logger.info(error);
+    logger.info("[AntiCrash] | [Exit_Logs] | [End]");
 });
 
-process.on('beforeExit', (code) => {
-  console.log(`${colors.bold.green(`[BEFORE EXIT]`)} `);
-  //console.log(code.yellow.dim)
+process.on("unhandledRejection", (reason, promise) => {
+    logger.info("[AntiCrash] | [UnhandledRejection_Logs] | [start]");
+    logger.info(reason);
+    logger.info("[AntiCrash] | [UnhandledRejection_Logs] | [end]");
 });
 
-process.on('exit', (code) => {
-  console.log(`${colors.bold.green(`[EXIT]`)} `);
-  //console.log(code.yellow.dim)
+process.on("rejectionHandled", (promise) => {
+    logger.info("[AntiCrash] | [RejectionHandled_Logs] | [Start]");
+    logger.info(promise);
+    logger.info("[AntiCrash] | [RejectionHandled_Logs] | [End]");
+});
+
+process.on("uncaughtException", (err, origin) => {
+    logger.info("[AntiCrash] | [UncaughtException_Logs] | [Start]");
+    logger.info(err);
+    logger.info("[AntiCrash] | [UncaughtException_Logs] | [End]");
+});
+
+process.on("uncaughtExceptionMonitor", (err, origin) => {
+    logger.info("[AntiCrash] | [UncaughtExceptionMonitor_Logs] | [Start]");
+    logger.info(err);
+    logger.info("[AntiCrash] | [UncaughtExceptionMonitor_Logs] | [End]");
+});
+
+process.on("warning", (warning) => {
+    logger.info("[AntiCrash] | [Warning_Logs] | [Start]");
+    logger.info(warning);
+    logger.info("[AntiCrash] | [Warning_Logs] | [End]");
+});
+
+process.on('SIGINT', () => {
+    logger.info('☆・[AntiCrash] | [SIGINT]・☆');
 });
 
 if (opts['cleartmp']) {
@@ -575,22 +587,22 @@ async function connectionUpdate(update) {
             }, {
                 quoted: null
             });
-            if (!messg) conn.logger.error(`\nError Connection'\n${format(e)}'`);
+            if (!messg) logger.error(`\nError Connection'\n${format(e)}'`);
         } catch (e) {
-            conn.logger.error(`\nError Connection'\n${format(e)}'`);
+            logger.error(`\nError Connection'\n${format(e)}'`);
         }
-        conn.logger.info(chalk.bold.yellow('\n🚩 R E A D Y'));
+        logger.info(chalk.bold.yellow('\n🚩 R E A D Y'));
         await runTasks();
     }
 
-    if (isOnline === true) conn.logger.info(chalk.bold.green('Status Aktif'));
-    else if (isOnline === false) conn.logger.error(chalk.bold.red('Status Mati'));
+    if (isOnline === true) logger.info(chalk.bold.green('Status Aktif'));
+    else if (isOnline === false) logger.error(chalk.bold.red('Status Mati'));
 
-    if (receivedPendingNotifications) conn.logger.warn(chalk.bold.yellow('Menunggu Pesan Baru'));
+    if (receivedPendingNotifications) logger.warn(chalk.bold.yellow('Menunggu Pesan Baru'));
     
     if ((!pairingCode && !useMobile || useQr) && qr !== 0 && qr !== undefined && connection === 'close') {
-        if (!useMobile) conn.logger.error(chalk.bold.yellow(`\n🚩 Koneksi ditutup, harap hapus folder ${authFolder} dan pindai ulang kode QR`));
-        else conn.logger.info(chalk.bold.yellow(`\n🚩 Pindai kode QR ini, kode QR akan kedaluwarsa dalam 60 detik.`));
+        if (!useMobile) logger.error(chalk.bold.yellow(`\n🚩 Koneksi ditutup, harap hapus folder ${authFolder} dan pindai ulang kode QR`));
+        else logger.info(chalk.bold.yellow(`\n🚩 Pindai kode QR ini, kode QR akan kedaluwarsa dalam 60 detik.`));
         setImmediate(() => process.exit(1));
     }
 }
@@ -796,7 +808,7 @@ async function filesInit() {
                 success: true
             };
         } catch (e) {
-            conn.logger.error(e);
+            logger.error(e);
             delete global.plugins[moduleName];
             return {
                 moduleName,
@@ -833,9 +845,9 @@ async function filesInit() {
         const successPluginsMsg = `✅ Success Plugins:\n${successMessages.length} total.`;
         const errorPluginsMsg = `❌ Error Plugins:\n${errorMessages.length} total`;
 
-        conn.logger.warn(loadedPluginsMsg);
-        conn.logger.info(successPluginsMsg);
-        conn.logger.error(errorPluginsMsg);
+        logger.warn(loadedPluginsMsg);
+        logger.info(successPluginsMsg);
+        logger.error(errorPluginsMsg);
 
         const errorMessagesText = errorMessages.map((error, index) =>
             `  ❗ *Error ${index + 1}:* ${error.filePath}\n - ${error.message}`
@@ -856,10 +868,10 @@ async function filesInit() {
         );
 
         if (!messg) {
-            conn.logger.error(`\nError sending message`);
+            logger.error(`\nError sending message`);
         }
     } catch (e) {
-        conn.logger.error(`\nError sending message: ${e}`);
+        logger.error(`\nError sending message: ${e}`);
     }
 }
 
@@ -882,7 +894,7 @@ async function libFiles() {
                 success: true
             };
         } catch (e) {
-            conn.logger.error(e);
+            logger.error(e);
             delete global.lib[moduleName.slice(0, -3)];
             return {
                 moduleName,
@@ -897,7 +909,7 @@ async function libFiles() {
         results.forEach(result => {
             if (result.status === 'rejected') {
                 const moduleName = result.value.moduleName;
-                conn.logger.error(`Error occurred while importing ${moduleName}.`);
+                logger.error(`Error occurred while importing ${moduleName}.`);
             }
         });
 
@@ -905,7 +917,7 @@ async function libFiles() {
             Object.entries(global.lib[''].lib).sort(([a], [b]) => a.localeCompare(b))
         );
     } catch (e) {
-        conn.logger.error(`Error occurred while importing libraries: ${e}`);
+        logger.error(`Error occurred while importing libraries: ${e}`);
     }
 }
 
@@ -922,7 +934,7 @@ global.reload = async (_ev, filename) => {
 
     try {
         if (existsSync(dir)) {
-            conn.logger.info(`\nRequiring plugin '${filename}'`);
+            logger.info(`\nRequiring plugin '${filename}'`);
             const fileContent = await readFileSync(dir, 'utf-8');
             const err = syntaxerror(fileContent, filename, {
                 sourceType: 'module',
@@ -932,17 +944,17 @@ global.reload = async (_ev, filename) => {
                 allowImportExportEverywhere: true
             });
             if (err) {
-                conn.logger.error(`\nSyntax error while loading '${filename}'\n${format(err)}`);
+                logger.error(`\nSyntax error while loading '${filename}'\n${format(err)}`);
             } else {
                 const module = (await import(`${global.__filename(dir)}?update=${Date.now()}`));
                 global.plugins[filename] = module.default || module;
             }
         } else {
-            conn.logger.warn(`Deleted plugin '${filename}'`);
+            logger.warn(`Deleted plugin '${filename}'`);
             delete global.plugins[filename];
         }
     } catch (e) {
-        conn.logger.error(`\nError requiring plugin '${filename}'\n${format(e)}`);
+        logger.error(`\nError requiring plugin '${filename}'\n${format(e)}`);
     } finally {
         global.plugins = Object.fromEntries(
             Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b))
@@ -964,7 +976,7 @@ async function FileEv(type, file) {
                 break;
         }
     } catch (e) {
-        conn.logger.error(`\nError processing file event '${type}' for '${file}': ${e.message}`);
+        logger.error(`\nError processing file event '${type}' for '${file}': ${e.message}`);
     } finally {
         global.plugins = Object.fromEntries(
             Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b))
@@ -984,33 +996,33 @@ async function watchFiles() {
     watcher
         .on('add', async (path) => {
             try {
-                conn.logger.info(`\nNew plugin - '${path}'`);
+                logger.info(`\nNew plugin - '${path}'`);
                 await FileEv('add', `./${path}`);
             } catch (e) {
-                conn.logger.error(`\nError handling 'add' event for '${path}': ${e.message}`);
+                logger.error(`\nError handling 'add' event for '${path}': ${e.message}`);
             }
         })
         .on('change', async (path) => {
             try {
-                conn.logger.info(`\nUpdated plugin - '${path}'`);
+                logger.info(`\nUpdated plugin - '${path}'`);
                 await FileEv('change', `./${path}`);
             } catch (e) {
-                conn.logger.error(`\nError handling 'change' event for '${path}': ${e.message}`);
+                logger.error(`\nError handling 'change' event for '${path}': ${e.message}`);
             }
         })
         .on('unlink', async (path) => {
             try {
-                conn.logger.warn(`Deleted plugin - '${path}'`);
+                logger.warn(`Deleted plugin - '${path}'`);
                 await FileEv('delete', `./${path}`);
             } catch (e) {
-                conn.logger.error(`\nError handling 'unlink' event for '${path}': ${e.message}`);
+                logger.error(`\nError handling 'unlink' event for '${path}': ${e.message}`);
             }
         })
         .on('error', (error) => {
-            conn.logger.error(`\nWatcher error: ${error.message}`);
+            logger.error(`\nWatcher error: ${error.message}`);
         })
         .on('ready', () => {
-            conn.logger.info('\nInitial scan complete. Ready for changes.\n');
+            logger.info('\nInitial scan complete. Ready for changes.\n');
         });
 }
 
