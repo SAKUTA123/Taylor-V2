@@ -1,11 +1,18 @@
-let handler = async (m) => {
-    let totalreg = Object.keys(global.db.data.users).length
-    let rtotalreg = Object.values(global.db.data.users).filter(user => user.registered == true).length
-    m.reply(`*Jumlah pengguna database saat ini adalah ${totalreg} user*`)
-}
-handler.help = ['database', 'user']
-handler.tags = ['info']
-handler.command = /^(database|jumlahdatabase|user)$/i
-handler.limit = true
+const handler = async (m) => {
+    try {
+        const { users } = global.db.data;
+        const total = Object.keys(users).length;
+        const registered = Object.values(users).reduce((acc, user) => user.registered ? acc + 1 : acc, 0);
+        m.reply(`🔍 *Informasi Database* 🔍\n\n👥 Jumlah pengguna database saat ini: ${total} user\n✔️ Jumlah pengguna terdaftar: ${registered} user`);
+    } catch (error) {
+        console.error(error);
+        m.reply('Terjadi kesalahan saat mengambil informasi database.');
+    }
+};
 
-export default handler
+handler.help = ['database', 'user'];
+handler.tags = ['info'];
+handler.command = /^(database|jumlahdatabase|user)$/i;
+handler.limit = true;
+
+export default handler;
