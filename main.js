@@ -1,4 +1,13 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+process.env.NODE_OPTIONS = '--max-old-space-size=4096 --optimize-for-size --use-strict --no-lazy';
+process.env.NODE_MAX_LISTENERS = '100';
+process.env.NODE_ENV = 'production';
+process.env.NODE_GC_GLOBAL = 'true';
+process.env.NODE_COMPRESS_RESPONSE = 'true';
+process.env.NODE_STRICT_MODE = 'true';
+process.env.NODE_FAST_RESPONSE = 'true';
+process.env.NODE_PERF_HOOKS = 'true';
+process.env.UV_THREADPOOL_SIZE = '64';
 
 import {
     loadConfig
