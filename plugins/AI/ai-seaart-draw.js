@@ -55,7 +55,7 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         delete processedImg.info.url;
         const caption = Object.entries(processedImg.info).map(([key, value]) => `  ○ *${key.toUpperCase()}:* ${value}`).join('\n');
         
-        await conn.sendMessage(m.chat, { image: { url: media }, caption: `*Prompt:* ${text}\n*Model:* ${chosmodel}\n*Caption:* ${caption}` }, { quoted: m });
+        await conn.sendMessage(m.chat, { image: { url: media }, caption: `*Prompt:* ${text}\n*Model:* ${chosmodel}\n*Caption:*\n${caption}` }, { quoted: m });
     } catch (error) {
         console.error(error);
         await m.reply('An error occurred while processing your request. Please try again later.');
